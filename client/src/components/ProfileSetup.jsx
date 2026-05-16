@@ -21,6 +21,8 @@ export default function ProfileSetup({ setUser, setProfile }) {
     linkedin: 'https://linkedin.com/in/demo-student',
     portfolio: 'https://portfolio.example.com'
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     api.catalog().then(setCatalog).catch(() => setCatalog(fallbackCatalog));
@@ -60,6 +62,16 @@ export default function ProfileSetup({ setUser, setProfile }) {
 
   const submit = (event) => {
     event.preventDefault();
+    setError('');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setError('Enter a valid email address.');
+      return;
+    }
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+    setSubmitting(true);
     const user = { fullName: form.fullName, email: form.email, provider: 'email-password-demo', authenticated: true };
     const profile = { ...form, selectedSubjectOnly: form.subject, completedSubjects: [], activeSubjects: [form.subject] };
     setUser(user);
@@ -90,7 +102,7 @@ export default function ProfileSetup({ setUser, setProfile }) {
             ['academicYear', 'Academic Year']
           ].map(([field, label]) => (
             <label key={field} className="space-y-2 text-sm text-slate-300">{label}
-              <input type={field === 'password' ? 'password' : 'text'} value={form[field]} onChange={(e) => update(field, e.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none focus:border-cyan-300" required />
+              <input type={field === 'password' ? 'password' : field === 'email' ? 'email' : 'text'} value={form[field]} onChange={(e) => update(field, e.target.value)} autoComplete={field === 'password' ? 'current-password' : field === 'email' ? 'email' : 'on'} minLength={field === 'password' ? 8 : undefined} className="w-full rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none focus:border-cyan-300" required />
             </label>
           ))}
         </div>
@@ -131,7 +143,10 @@ export default function ProfileSetup({ setUser, setProfile }) {
           </label>
         </div>
 
-        <button className="mt-6 w-full rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950">Save profile and start mandatory AI analysis</button>
+        {error && <p className="mt-5 rounded-lg bg-red-500/10 px-4 py-3 text-sm text-red-100 ring-1 ring-red-300/20">{error}</p>}
+        <button disabled={submitting} className="mt-6 w-full rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-60">
+          {submitting ? 'Saving profile...' : 'Save profile and start mandatory AI analysis'}
+        </button>
       </form>
 
       <aside className="glass rounded-xl p-6 shadow-glow">

@@ -9,8 +9,9 @@ export default function Chatbot({ profile, analysis, roadmap }) {
   const [messages, setMessages] = useState([{ role: 'assistant', content: 'I am StudyPulse AI. Ask me for concept help, coding support, quiz generation, or roadmap guidance.' }]);
 
   const send = async (text = input) => {
-    if (!text.trim()) return;
-    const next = [...messages, { role: 'user', content: text }];
+    const prompt = text.trim();
+    if (!prompt || loading) return;
+    const next = [...messages, { role: 'user', content: prompt }];
     setMessages(next);
     setInput('');
     setLoading(true);
@@ -26,7 +27,9 @@ export default function Chatbot({ profile, analysis, roadmap }) {
           roadmapProgress: getRoadmapProgress(profile)
         }
       });
-      setMessages((prev) => [...prev, { role: 'assistant', content: result.response }]);
+      setMessages((prev) => [...prev, { role: 'assistant', content: result?.response || 'I could not generate a response. Please try again.' }]);
+    } catch (error) {
+      setMessages((prev) => [...prev, { role: 'assistant', content: error.message || 'Unable to reach the AI assistant. Please try again.' }]);
     } finally {
       setLoading(false);
     }
@@ -53,12 +56,12 @@ export default function Chatbot({ profile, analysis, roadmap }) {
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {['Explain simply', 'Generate quiz', 'Make roadmap plan'].map((item) => (
-              <button key={item} onClick={() => send(item)} className="rounded-full bg-white/10 px-3 py-1 text-xs">{item}</button>
+              <button key={item} onClick={() => send(item)} disabled={loading} className="rounded-full bg-white/10 px-3 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-50">{item}</button>
             ))}
           </div>
           <div className="mt-3 flex gap-2">
-            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} className="min-w-0 flex-1 rounded-lg border border-white/10 bg-slate-950/70 px-3 py-2 text-sm outline-none" placeholder="Ask StudyPulse AI..." />
-            <button onClick={() => send()} className="rounded-lg bg-cyan-400 px-3 text-slate-950"><Send size={16} /></button>
+            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && send()} disabled={loading} className="min-w-0 flex-1 rounded-lg border border-white/10 bg-slate-950/70 px-3 py-2 text-sm outline-none disabled:opacity-60" placeholder="Ask StudyPulse AI..." />
+            <button onClick={() => send()} disabled={loading || !input.trim()} className="rounded-lg bg-cyan-400 px-3 text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"><Send size={16} /></button>
           </div>
         </div>
       )}
@@ -71,7 +74,7 @@ export default function Chatbot({ profile, analysis, roadmap }) {
 
 function getCurrentTopic(profile, roadmap) {
   const subjectId = profile?.subject;
-  const records = JSON.parse(localStorage.getItem('sp-subject-records') || '{}');
+  const records = readStoredRecords();
   const completed = records[subjectId]?.topicResults || {};
   const nextTopic = (roadmap?.roadmap || []).find((item) => !completed[item.id]);
   return nextTopic?.topic || Object.values(completed).at(-1)?.topic || 'current topic';
@@ -79,11 +82,20 @@ function getCurrentTopic(profile, roadmap) {
 
 function getRoadmapProgress(profile) {
   const subjectId = profile?.subject;
-  const records = JSON.parse(localStorage.getItem('sp-subject-records') || '{}');
+  const records = readStoredRecords();
   const topicResults = Object.values(records[subjectId]?.topicResults || {});
   return topicResults.map((result) => ({
     topic: result.topic,
     accuracy: result.accuracy,
     masteryLevel: result.masteryLevel
   }));
+}
+
+function readStoredRecords() {
+  try {
+    return JSON.parse(localStorage.getItem('sp-subject-records') || '{}');
+  } catch {
+    localStorage.removeItem('sp-subject-records');
+    return {};
+  }
 }

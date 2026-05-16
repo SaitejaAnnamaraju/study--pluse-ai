@@ -25,7 +25,7 @@ export default function Dashboard({ profile, analysis, roadmap, setAnalysis, set
   ], [analysis]);
 
   useEffect(() => {
-    const subjectRecords = JSON.parse(localStorage.getItem('sp-subject-records') || '{}');
+    const subjectRecords = readStoredRecords();
     setTaskResults(subjectRecords[subjectId]?.topicResults || {});
     setEfficiencyResult(subjectRecords[subjectId]?.finalReport || null);
   }, [subjectId]);
@@ -43,11 +43,16 @@ export default function Dashboard({ profile, analysis, roadmap, setAnalysis, set
 
   const openTaskQuiz = async (item) => {
     setLoadingTask(true);
-    const quiz = await api.taskQuiz({ subjectId, topic: item.topic });
-    setQuizQuestions(quiz.questions);
-    setActiveTask(item);
-    setQuizAnswers({});
-    setLoadingTask(false);
+    try {
+      const quiz = await api.taskQuiz({ subjectId, topic: item.topic });
+      setQuizQuestions(quiz.questions || []);
+      setActiveTask(item);
+      setQuizAnswers({});
+    } catch (error) {
+      window.alert(error.message || 'Unable to load the topic quiz.');
+    } finally {
+      setLoadingTask(false);
+    }
   };
 
   const selectQuizAnswer = (questionId, selected) => {
@@ -66,58 +71,68 @@ export default function Dashboard({ profile, analysis, roadmap, setAnalysis, set
 
     if (!answers.length) return;
     setLoadingTask(true);
-    const result = await api.taskEvaluate({ subjectId, topic: activeTask.topic, answers });
-    const updatedResults = { ...taskResults, [activeTask.id]: result };
-    const subjectRecords = JSON.parse(localStorage.getItem('sp-subject-records') || '{}');
-    const updatedRecord = {
-      ...(subjectRecords[subjectId] || {}),
-      subjectId,
-      subjectName: profile.subject,
-      analysis,
-      roadmap,
-      topicResults: updatedResults,
-      updatedAt: new Date().toISOString()
-    };
-    localStorage.setItem('sp-subject-records', JSON.stringify({ ...subjectRecords, [subjectId]: updatedRecord }));
-    setTaskResults(updatedResults);
-    setActiveTask(null);
-    setQuizQuestions([]);
-    setQuizAnswers({});
-    setLoadingTask(false);
+    try {
+      const result = await api.taskEvaluate({ subjectId, topic: activeTask.topic, answers });
+      const updatedResults = { ...taskResults, [activeTask.id]: result };
+      const subjectRecords = readStoredRecords();
+      const updatedRecord = {
+        ...(subjectRecords[subjectId] || {}),
+        subjectId,
+        subjectName: profile.subject,
+        analysis,
+        roadmap,
+        topicResults: updatedResults,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem('sp-subject-records', JSON.stringify({ ...subjectRecords, [subjectId]: updatedRecord }));
+      setTaskResults(updatedResults);
+      setActiveTask(null);
+      setQuizQuestions([]);
+      setQuizAnswers({});
+    } catch (error) {
+      window.alert(error.message || 'Unable to submit quiz answers.');
+    } finally {
+      setLoadingTask(false);
+    }
   };
 
   const runEfficiencyCheck = async () => {
     setLoadingEfficiency(true);
-    const results = Object.values(taskResults);
-    const response = await api.efficiencyCheck({ subjectId, analysis, taskResults: results });
-    setEfficiencyResult(response);
+    try {
+      const results = Object.values(taskResults);
+      const response = await api.efficiencyCheck({ subjectId, analysis, taskResults: results });
+      setEfficiencyResult(response);
 
-    const historyRecord = {
-      date: new Date().toISOString().slice(0, 10),
-      subject: profile.subject,
-      score: response.finalScore,
-      type: 'Final Efficiency Check'
-    };
-    const updatedProfile = {
-      ...profile,
-      history: [...(profile.history || []), historyRecord],
-      completedSubjects: [...new Set([...(profile.completedSubjects || []), profile.subject])],
-      activeSubjects: (profile.activeSubjects || []).filter((subject) => subject !== profile.subject)
-    };
-    const subjectRecords = JSON.parse(localStorage.getItem('sp-subject-records') || '{}');
-    localStorage.setItem('sp-subject-records', JSON.stringify({
-      ...subjectRecords,
-      [subjectId]: {
-        ...(subjectRecords[subjectId] || {}),
-        finalReport: response,
-        status: 'completed',
-        updatedAt: new Date().toISOString()
-      }
-    }));
+      const historyRecord = {
+        date: new Date().toISOString().slice(0, 10),
+        subject: profile.subject,
+        score: response.finalScore,
+        type: 'Final Efficiency Check'
+      };
+      const updatedProfile = {
+        ...profile,
+        history: [...(profile.history || []), historyRecord],
+        completedSubjects: [...new Set([...(profile.completedSubjects || []), profile.subject])],
+        activeSubjects: (profile.activeSubjects || []).filter((subject) => subject !== profile.subject)
+      };
+      const subjectRecords = readStoredRecords();
+      localStorage.setItem('sp-subject-records', JSON.stringify({
+        ...subjectRecords,
+        [subjectId]: {
+          ...(subjectRecords[subjectId] || {}),
+          finalReport: response,
+          status: 'completed',
+          updatedAt: new Date().toISOString()
+        }
+      }));
 
-    setProfile(updatedProfile);
-    localStorage.setItem('sp-profile', JSON.stringify(updatedProfile));
-    setLoadingEfficiency(false);
+      setProfile(updatedProfile);
+      localStorage.setItem('sp-profile', JSON.stringify(updatedProfile));
+    } catch (error) {
+      window.alert(error.message || 'Unable to run the efficiency check.');
+    } finally {
+      setLoadingEfficiency(false);
+    }
   };
 
   if (!profile || !analysis) {
@@ -386,4 +401,13 @@ export default function Dashboard({ profile, analysis, roadmap, setAnalysis, set
       )}
     </section>
   );
+}
+
+function readStoredRecords() {
+  try {
+    return JSON.parse(localStorage.getItem('sp-subject-records') || '{}');
+  } catch {
+    localStorage.removeItem('sp-subject-records');
+    return {};
+  }
 }

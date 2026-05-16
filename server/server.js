@@ -2,11 +2,15 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
 import mongoose from 'mongoose';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import adaptiveRouter from './routes/adaptive.js';
 import aiRouter from './routes/ai.js';
 import catalogRouter from './routes/catalog.js';
 
-dotenv.config();
+const serverDir = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(serverDir, '../.env') });
+dotenv.config({ path: path.resolve(serverDir, '.env'), override: true });
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -32,6 +36,11 @@ app.get('/', (req, res) => {
 app.use('/api/catalog', catalogRouter);
 app.use('/api/adaptive', adaptiveRouter);
 app.use('/api/ai', aiRouter);
+
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  res.status(err.status || 500).json({ error: err.message || 'Server error' });
+});
 
 app.listen(PORT, () => {
   console.log(`StudyPulse AI API listening on http://localhost:${PORT}`);

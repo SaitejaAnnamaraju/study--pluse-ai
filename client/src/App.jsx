@@ -9,12 +9,21 @@ import Home from './components/Home.jsx';
 import ProfileSetup from './components/ProfileSetup.jsx';
 import Shell from './components/Shell.jsx';
 
+function readStoredJson(key, fallback = null) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback;
+  } catch {
+    localStorage.removeItem(key);
+    return fallback;
+  }
+}
+
 export default function App() {
   const [theme, setTheme] = useState('dark');
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('sp-user') || 'null'));
-  const [profile, setProfile] = useState(() => JSON.parse(localStorage.getItem('sp-profile') || 'null'));
-  const [analysis, setAnalysis] = useState(() => JSON.parse(localStorage.getItem('sp-analysis') || 'null'));
-  const [roadmap, setRoadmap] = useState(() => JSON.parse(localStorage.getItem('sp-roadmap') || 'null'));
+  const [user, setUser] = useState(() => readStoredJson('sp-user'));
+  const [profile, setProfile] = useState(() => readStoredJson('sp-profile'));
+  const [analysis, setAnalysis] = useState(() => readStoredJson('sp-analysis'));
+  const [roadmap, setRoadmap] = useState(() => readStoredJson('sp-roadmap'));
 
   return (
     <Shell user={user} theme={theme} setTheme={setTheme}>

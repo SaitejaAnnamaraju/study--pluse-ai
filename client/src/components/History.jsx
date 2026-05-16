@@ -1,5 +1,5 @@
 export default function HistoryPage({ profile }) {
-  const subjectRecords = JSON.parse(localStorage.getItem('sp-subject-records') || '{}');
+  const subjectRecords = readStoredRecords();
   const subjects = Object.values(subjectRecords);
   const history = profile?.history || [];
   const records = history.length > 0 ? history : [
@@ -64,4 +64,13 @@ export default function HistoryPage({ profile }) {
       </div>
     </section>
   );
+}
+
+function readStoredRecords() {
+  try {
+    return JSON.parse(localStorage.getItem('sp-subject-records') || '{}');
+  } catch {
+    localStorage.removeItem('sp-subject-records');
+    return {};
+  }
 }

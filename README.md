@@ -21,7 +21,7 @@ StudyPulse AI is an AI-powered adaptive learning intelligence platform. It is no
 - Backend: Node.js, Express.js
 - Database: MongoDB ready through Mongoose
 - Authentication: Firebase/OAuth ready, with demo email/password flow included
-- AI: OpenAI API ready, with local mentor fallback included
+- AI: Gemini API ready, with local mentor fallback included
 
 ## Run Locally
 
@@ -35,13 +35,13 @@ Frontend: `http://localhost:5173`
 
 Backend: `http://localhost:4000`
 
-## OpenAI Key
+## Gemini Key
 
-The project works without an OpenAI key using demo mentor mode. For real AI mentor responses, add your key to `.env`:
+The project works without a Gemini key using demo mentor mode. For real AI mentor responses, add your key to `.env`:
 
 ```env
-OPENAI_API_KEY=sk-your-real-key
-OPENAI_API_MODEL=gpt-4o-mini
+GEMINI_API_KEY=your-real-key
+GEMINI_API_MODEL=gemini-2.5-flash
 ```
 
 Then restart:

@@ -2,7 +2,8 @@ import express from 'express';
 
 const router = express.Router();
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta';
-const hasGeminiKey = Boolean(process.env.GEMINI_API_KEY?.trim());
+const GEMINI_TIMEOUT_MS = 20000;
+const hasGeminiKey = () => Boolean(process.env.GEMINI_API_KEY?.trim());
 
 function analyzeLearnerState(context = {}) {
   const weakConcepts = context.weakConcepts || [];
@@ -239,25 +240,39 @@ function readGeminiText(data) {
 async function callGemini({ messages, context }) {
   const model = process.env.GEMINI_API_MODEL || 'gemini-2.5-flash';
   const learnerState = analyzeLearnerState(context);
-  const response = await fetch(`${GEMINI_API_URL}/models/${model}:generateContent`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-key': process.env.GEMINI_API_KEY
-    },
-    body: JSON.stringify({
-      systemInstruction: {
-        parts: [{ text: buildSystemPrompt(context, learnerState) }]
-      },
-      contents: toGeminiContents(messages),
-      generationConfig: {
-        temperature: 0.75,
-        maxOutputTokens: 700
-      }
-    })
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+  let response;
+  let data;
 
-  const data = await response.json();
+  try {
+    response = await fetch(`${GEMINI_API_URL}/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': process.env.GEMINI_API_KEY
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: buildSystemPrompt(context, learnerState) }]
+        },
+        contents: toGeminiContents(messages),
+        generationConfig: {
+          temperature: 0.75,
+          maxOutputTokens: 700
+        }
+      })
+    });
+    data = await response.json().catch(() => ({}));
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Gemini request timed out.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const message = data?.error?.message || 'Gemini request failed.';
@@ -268,9 +283,11 @@ async function callGemini({ messages, context }) {
 }
 
 router.post('/chat', async (req, res) => {
-  const { messages = [], context = {} } = req.body;
+  const body = req.body || {};
+  const messages = Array.isArray(body.messages) ? body.messages : [];
+  const context = body.context && typeof body.context === 'object' ? body.context : {};
 
-  if (!hasGeminiKey) {
+  if (!hasGeminiKey()) {
     return res.json({ mode: 'demo', response: localMentor(messages, context) });
   }
 

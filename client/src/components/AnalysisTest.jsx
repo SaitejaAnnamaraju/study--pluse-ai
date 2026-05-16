@@ -70,45 +70,49 @@ export default function AnalysisTest({ profile, setAnalysis, setRoadmap }) {
   const completeStage = async () => {
     const payloadAnswers = selectedQuestions.map((question) => answers[question.id]).filter(Boolean);
     if (payloadAnswers.length !== selectedQuestions.length) return;
-    const result = await api.evaluateStage({ subjectId, stageType: currentStage, answers: payloadAnswers });
-    const nextResults = { ...stageResults, [currentStage]: result };
-    setStageResults(nextResults);
-    setAnswers({});
-    setStageStartedAt(Date.now());
-    setQuestionStartedAt({});
+    try {
+      const result = await api.evaluateStage({ subjectId, stageType: currentStage, answers: payloadAnswers });
+      const nextResults = { ...stageResults, [currentStage]: result };
+      setStageResults(nextResults);
+      setAnswers({});
+      setStageStartedAt(Date.now());
+      setQuestionStartedAt({});
 
-    if (stage < 2) {
-      setStage(stage + 1);
-      return;
-    }
-
-    const detected = await api.detectProfile({
-      subjectId,
-      knowledge: nextResults.knowledge,
-      video: nextResults.video,
-      reading: nextResults.reading
-    });
-    const roadmapData = await api.roadmap({ subjectId, profile: detected });
-    const subjectRecords = JSON.parse(localStorage.getItem('sp-subject-records') || '{}');
-    const updatedRecords = {
-      ...subjectRecords,
-      [subjectId]: {
-        subjectId,
-        subjectName: subject?.name || subjectId,
-        analysis: detected,
-        stageResults: nextResults,
-        roadmap: roadmapData,
-        topicResults: subjectRecords[subjectId]?.topicResults || {},
-        status: 'active',
-        updatedAt: new Date().toISOString()
+      if (stage < 2) {
+        setStage(stage + 1);
+        return;
       }
-    };
-    setAnalysis(detected);
-    setRoadmap(roadmapData);
-    localStorage.setItem('sp-analysis', JSON.stringify(detected));
-    localStorage.setItem('sp-roadmap', JSON.stringify(roadmapData));
-    localStorage.setItem('sp-subject-records', JSON.stringify(updatedRecords));
-    navigate('/dashboard');
+
+      const detected = await api.detectProfile({
+        subjectId,
+        knowledge: nextResults.knowledge,
+        video: nextResults.video,
+        reading: nextResults.reading
+      });
+      const roadmapData = await api.roadmap({ subjectId, profile: detected });
+      const subjectRecords = readStoredRecords();
+      const updatedRecords = {
+        ...subjectRecords,
+        [subjectId]: {
+          subjectId,
+          subjectName: subject?.name || subjectId,
+          analysis: detected,
+          stageResults: nextResults,
+          roadmap: roadmapData,
+          topicResults: subjectRecords[subjectId]?.topicResults || {},
+          status: 'active',
+          updatedAt: new Date().toISOString()
+        }
+      };
+      setAnalysis(detected);
+      setRoadmap(roadmapData);
+      localStorage.setItem('sp-analysis', JSON.stringify(detected));
+      localStorage.setItem('sp-roadmap', JSON.stringify(roadmapData));
+      localStorage.setItem('sp-subject-records', JSON.stringify(updatedRecords));
+      navigate('/dashboard');
+    } catch (error) {
+      window.alert(error.message || 'Unable to complete analysis. Please try again.');
+    }
   };
 
   if (!profile) {
@@ -179,4 +183,13 @@ export default function AnalysisTest({ profile, setAnalysis, setRoadmap }) {
       </aside>
     </section>
   );
+}
+
+function readStoredRecords() {
+  try {
+    return JSON.parse(localStorage.getItem('sp-subject-records') || '{}');
+  } catch {
+    localStorage.removeItem('sp-subject-records');
+    return {};
+  }
 }
