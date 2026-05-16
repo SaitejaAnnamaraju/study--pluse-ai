@@ -2,6 +2,15 @@ import { Bot, Send, X } from 'lucide-react';
 import { useState } from 'react';
 import { api } from '../lib/api.js';
 
+const mentorPrompts = [
+  'What is Java?',
+  'Explain DBMS with example',
+  'Difference between stack and queue',
+  'Generate quiz',
+  'Make study plan',
+  'I am confused'
+];
+
 export default function Chatbot({ profile, analysis, roadmap }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
@@ -27,6 +36,8 @@ export default function Chatbot({ profile, analysis, roadmap }) {
         }
       });
       setMessages((prev) => [...prev, { role: 'assistant', content: result.response }]);
+    } catch (error) {
+      setMessages((prev) => [...prev, { role: 'assistant', content: 'I could not reach the AI service right now, but you can ask again after checking the server is running. For example, ask "What is Java?" or "Explain DBMS".' }]);
     } finally {
       setLoading(false);
     }
@@ -52,7 +63,7 @@ export default function Chatbot({ profile, analysis, roadmap }) {
             {loading && <div className="rounded-lg bg-slate-950/80 p-3 text-sm text-slate-300">Thinking...</div>}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {['Explain simply', 'Generate quiz', 'Make roadmap plan'].map((item) => (
+            {mentorPrompts.map((item) => (
               <button key={item} onClick={() => send(item)} className="rounded-full bg-white/10 px-3 py-1 text-xs">{item}</button>
             ))}
           </div>
