@@ -9,3 +9,20 @@
 [32m[nodemon] starting `node server.js`[39m
 StudyPulse AI API listening on http://localhost:4000
 MongoDB not connected; running in demo memory mode
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js`[39m
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js`[39m
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js`[39m
+StudyPulse AI API listening on http://localhost:4000
+MongoDB not connected; running in demo memory mode
+.[39m
+[32m[nodemon] starting `node server.js`[39m
+StudyPulse AI API listening on http://localhost:4000
+MongoDB not connected; running in demo memory mode
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node server.js`[39m
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
