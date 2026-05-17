@@ -63,6 +63,36 @@ const subjects = {
   }
 };
 
+const generatedSubjects = [
+  ['python', 'Python', 'rfscVS0vtbw', 'Python learning starts with variables, control flow, functions, collections, modules, file handling, exceptions, object-oriented programming, packages, APIs, testing, and automation.', ['Variables', 'Data Types', 'Conditionals', 'Loops', 'Functions'], ['Collections', 'Modules', 'File Handling', 'Exceptions', 'OOP'], ['Decorators', 'Async IO', 'FastAPI', 'Testing', 'Automation Pipelines']],
+  ['ml', 'Machine Learning', 'GwIo3gDZCVQ', 'Machine learning studies how models learn patterns from data. Core areas include data preprocessing, supervised learning, regression, classification, clustering, evaluation, feature engineering, and model deployment.', ['Data Preprocessing', 'Regression', 'Classification', 'Model Evaluation', 'Feature Basics'], ['Clustering', 'Regularization', 'Feature Engineering', 'Pipelines', 'Model Selection'], ['Neural Networks', 'MLOps', 'Explainability', 'Model Serving', 'Production Monitoring']],
+  ['digital-electronics', 'Digital Electronics', 'M0mx8S05v60', 'Digital electronics focuses on binary logic, gates, boolean algebra, combinational circuits, sequential circuits, flip-flops, counters, registers, memory, and digital system design.', ['Number Systems', 'Logic Gates', 'Boolean Algebra', 'K-Maps', 'Combinational Circuits'], ['Multiplexers', 'Flip-Flops', 'Counters', 'Registers', 'Memory Basics'], ['FSM Design', 'Timing Analysis', 'Verilog Basics', 'FPGA Flow', 'Digital System Design']],
+  ['embedded-c', 'Embedded C', 'V7nP2T4hH2o', 'Embedded C applies C programming to microcontrollers and hardware. Students learn pointers, registers, bit operations, interrupts, timers, serial communication, sensors, and firmware design.', ['C Basics', 'Pointers', 'Bitwise Operators', 'Registers', 'GPIO'], ['Timers', 'Interrupts', 'UART', 'ADC', 'Sensor Interfacing'], ['RTOS Basics', 'Device Drivers', 'Low Power Design', 'Firmware Testing', 'Hardware Debugging']],
+  ['signals', 'Signals and Systems', 'r18Gi8lSkfM', 'Signals and systems studies signal representation, transforms, convolution, frequency response, sampling, filters, and system behavior in time and frequency domains.', ['Signal Types', 'System Properties', 'Convolution', 'Fourier Series', 'Sampling'], ['Fourier Transform', 'Laplace Transform', 'Z Transform', 'Filters', 'Frequency Response'], ['DSP Basics', 'Stability Analysis', 'Filter Design', 'State Space', 'Communication Signals']],
+  ['cloud', 'Cloud Computing', '2LaAJq1lB1Q', 'Cloud computing covers virtualized infrastructure, storage, networking, containers, serverless functions, security, monitoring, deployment automation, and scalable system design.', ['Cloud Basics', 'Virtual Machines', 'Storage', 'Networking', 'IAM'], ['Containers', 'Serverless', 'Databases', 'Monitoring', 'CI/CD'], ['Kubernetes', 'Cloud Security', 'Cost Optimization', 'High Availability', 'Cloud Architecture']],
+  ['statistics', 'Statistics', 'xxpc-HPKN28', 'Statistics supports data analysis through descriptive measures, probability, distributions, sampling, hypothesis testing, correlation, regression, and inference.', ['Mean Median Mode', 'Probability', 'Distributions', 'Sampling', 'Variance'], ['Hypothesis Testing', 'Correlation', 'Regression', 'Confidence Intervals', 'ANOVA'], ['Bayesian Statistics', 'Time Series', 'Experimental Design', 'Multivariate Analysis', 'Statistical Modeling']]
+];
+
+generatedSubjects.forEach(([id, name, introVideo, paragraph, beginnerTopics, intermediateTopics, advancedTopics]) => {
+  subjects[id] = {
+    id,
+    name,
+    introVideo,
+    paragraph,
+    beginnerTopics,
+    intermediateTopics,
+    advancedTopics,
+    mcqs: beginnerTopics.map((topic, index) => ({
+      id: `${id}-${index + 1}`,
+      topic,
+      question: `Which option best represents the role of ${topic} in ${name}?`,
+      options: ['Core concept', 'Deployment platform only', 'Design color', 'Unrelated syntax'],
+      answer: 'Core concept',
+      difficulty: index < 2 ? 1 : 2
+    }))
+  };
+});
+
 const genericSubject = (id) => ({
   ...subjects.webdev,
   id,
@@ -85,6 +115,14 @@ export function offlineCatalog() {
             { id: 'aiml', name: 'AIML', subjects: ['python', 'ml', 'dsa', 'webdev'] },
             { id: 'ece', name: 'ECE', subjects: ['digital-electronics', 'embedded-c', 'signals'] },
             { id: 'it', name: 'IT', subjects: ['java', 'dbms', 'webdev', 'cloud'] }
+          ]
+        },
+        {
+          id: 'degree',
+          name: 'Degree',
+          departments: [
+            { id: 'computer-science', name: 'Computer Science', subjects: ['python', 'dbms', 'webdev'] },
+            { id: 'data-science', name: 'Data Science', subjects: ['python', 'ml', 'statistics'] }
           ]
         }
       ]

@@ -24,7 +24,10 @@ async function request(path, options = {}) {
       signal: controller.signal
     });
     const contentType = response.headers.get('content-type') || '';
-    const data = contentType.includes('application/json') ? await response.json() : null;
+    if (!contentType.includes('application/json')) {
+      throw new Error('API returned a non-JSON response.');
+    }
+    const data = await response.json();
 
     if (!response.ok) {
       throw new Error(data?.error || data?.message || `Request failed: ${response.status}`);
